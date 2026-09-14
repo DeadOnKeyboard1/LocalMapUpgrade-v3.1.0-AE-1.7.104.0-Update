@@ -1,0 +1,31 @@
+{
+  "$LMU_PageMap": { "en": "Map", "de": "Karte" },
+  "$LMU_Display": { "en": "Appearance", "de": "Darstellung" },
+  "$LMU_Color": { "en": "Colored local map", "de": "Farbige lokale Karte" },
+  "$LMU_Fog": { "en": "Fog of war", "de": "Erkundungsnebel" },
+  "$LMU_Navigation": { "en": "Navigation", "de": "Navigation" },
+  "$LMU_PanSpeed": { "en": "Keyboard pan speed", "de": "Verschiebegeschwindigkeit" },
+  "$LMU_PageNPC": { "en": "NPC Icons", "de": "NPC-Symbole" },
+  "$LMU_Categories": { "en": "Visible categories", "de": "Sichtbare Kategorien" },
+  "$LMU_Enemy": { "en": "Combat enemies", "de": "Gegner im Kampf" },
+  "$LMU_Hostile": { "en": "Hostile NPCs", "de": "Feindselige NPCs" },
+  "$LMU_Guards": { "en": "Guards", "de": "Wachen" },
+  "$LMU_Dead": { "en": "Lootable corpses", "de": "Pl\u00fcnderbare Leichen" },
+  "$LMU_Teammates": { "en": "Followers", "de": "Begleiter" },
+  "$LMU_Neutral": { "en": "Neutral NPCs", "de": "Neutrale NPCs" },
+  "$LMU_Immersion": { "en": "Immersion", "de": "Immersion" },
+  "$LMU_Immersive": { "en": "Immersive mode", "de": "Immersive-Modus" },
+  "$LMU_ImmersiveHelp": {
+    "en": "NPC and corpse icons appear only with the appropriate detection effects (Detect Life, Detect Dead, Aura Whisper) and within their range. Enabling a category alone is not enough. Turn this off for persistent icons. Map color, fog and keyboard pan speed remain independent.",
+    "de": "NPC- und Leichensymbole erscheinen nur bei passenden Erkennungszaubern (Leben entdecken, Tote entdecken, Aurafl\u00fcstern) und in deren Reichweite. Aktivierte Kategorien allein reichen nicht. F\u00fcr dauerhaft sichtbare Symbole ausschalten. Kartenfarbe, Nebel und Verschiebegeschwindigkeit bleiben unabh\u00e4ngig."
+  },
+  "$LMU_PageDiagnostics": { "en": "Diagnostics", "de": "Diagnose" },
+  "$LMU_Logging": { "en": "Logging", "de": "Protokoll" },
+  "$LMU_LogLevel": { "en": "Log level", "de": "Protokollstufe" },
+  "$LMU_LogTrace": { "en": "0 - Trace", "de": "0 - Trace" },
+  "$LMU_LogDebug": { "en": "1 - Debug", "de": "1 - Debug" },
+  "$LMU_LogInfo": { "en": "2 - Information", "de": "2 - Information" },
+  "$LMU_LogWarning": { "en": "3 - Warning", "de": "3 - Warnung" },
+  "$LMU_LogError": { "en": "4 - Error", "de": "4 - Fehler" },
+  "$LMU_LogCritical": { "en": "5 - Critical", "de": "5 - Kritischer Fehler" }
+}

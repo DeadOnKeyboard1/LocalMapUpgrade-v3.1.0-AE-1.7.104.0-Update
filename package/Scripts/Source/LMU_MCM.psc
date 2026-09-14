@@ -1,0 +1,1 @@
+Scriptname LMU_MCM extends MCM_ConfigBase

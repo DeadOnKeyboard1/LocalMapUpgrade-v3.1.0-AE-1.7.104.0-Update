@@ -1,0 +1,11 @@
+{
+    "name": "local-map-upgrade",
+    "version-string": "3.1.0",
+    "description": "Local Map Upgrade with Skyrim 1.7.104.0 compatibility and MCM support",
+    "homepage": "https://github.com/alexsylex/LocalMapUpgrade",
+    "license": "MIT",
+    "dependencies": [
+        "commonlibsse-ng"
+    ],
+    "builtin-baseline": "8d3649ba34aab36914ddd897958599aa0a91b08e"
+}

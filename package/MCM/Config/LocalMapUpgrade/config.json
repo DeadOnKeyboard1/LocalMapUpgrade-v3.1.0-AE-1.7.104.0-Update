@@ -1,0 +1,76 @@
+{
+  "modName": "LocalMapUpgrade",
+  "displayName": "Local Map Upgrade",
+  "minMcmVersion": 11,
+  "cursorFillMode": "topToBottom",
+  "pages": [
+    {
+      "pageDisplayName": "$LMU_PageMap",
+      "content": [
+        { "type": "header", "text": "$LMU_Display" },
+        {
+          "id": "bMapLocalColor:MapMenu", "type": "toggle", "text": "$LMU_Color",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": true }
+        },
+        {
+          "id": "bMapLocalFogOfWar:MapMenu", "type": "toggle", "text": "$LMU_Fog",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": true }
+        },
+        { "type": "header", "text": "$LMU_Navigation" },
+        {
+          "id": "fMapLocalKeyboardPanSpeed:MapMenu", "type": "slider", "text": "$LMU_PanSpeed",
+          "valueOptions": { "sourceType": "ModSettingFloat", "defaultValue": 50.0, "min": 0.0, "max": 500.0, "step": 5.0, "formatString": "{0}" }
+        }
+      ]
+    },
+    {
+      "pageDisplayName": "$LMU_PageNPC",
+      "content": [
+        { "type": "header", "text": "$LMU_Categories" },
+        {
+          "id": "bMapLocalShowEnemyActors:MapMenu", "type": "toggle", "text": "$LMU_Enemy",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": true }
+        },
+        {
+          "id": "bMapLocalShowHostileActors:MapMenu", "type": "toggle", "text": "$LMU_Hostile",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": true }
+        },
+        {
+          "id": "bMapLocalShowGuardActors:MapMenu", "type": "toggle", "text": "$LMU_Guards",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": true }
+        },
+        {
+          "id": "bMapLocalShowDeadActors:MapMenu", "type": "toggle", "text": "$LMU_Dead",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": true }
+        },
+        {
+          "id": "bMapLocalShowTeammateActors:MapMenu", "type": "toggle", "text": "$LMU_Teammates",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": true }
+        },
+        {
+          "id": "bMapLocalShowNeutralActors:MapMenu", "type": "toggle", "text": "$LMU_Neutral",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": true }
+        },
+        { "type": "header", "text": "$LMU_Immersion" },
+        {
+          "id": "bImmersiveMode:MapMenu", "type": "toggle", "text": "$LMU_Immersive",
+          "help": "$LMU_ImmersiveHelp",
+          "valueOptions": { "sourceType": "ModSettingBool", "defaultValue": false }
+        }
+      ]
+    },
+    {
+      "pageDisplayName": "$LMU_PageDiagnostics",
+      "content": [
+        { "type": "header", "text": "$LMU_Logging" },
+        {
+          "id": "uLogLevel:Debug", "type": "enum", "text": "$LMU_LogLevel",
+          "valueOptions": {
+            "sourceType": "ModSettingInt", "defaultValue": 2,
+            "options": ["$LMU_LogTrace", "$LMU_LogDebug", "$LMU_LogInfo", "$LMU_LogWarning", "$LMU_LogError", "$LMU_LogCritical"]
+          }
+        }
+      ]
+    }
+  ]
+}
