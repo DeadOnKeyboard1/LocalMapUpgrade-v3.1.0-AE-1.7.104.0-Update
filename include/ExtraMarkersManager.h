@@ -16,27 +16,6 @@ namespace LMU
 			kNeutral,
 			kTotal
 		};
-
-		struct CreateData
-		{
-			enum
-			{
-				kName,
-				kIconType,
-				kCreateUndiscovered,
-				kStride
-			};
-		};
-
-		struct RefreshData
-		{
-			enum
-			{
-				kX,
-				kY,
-				kStride
-			};
-		};
 	};
 
 	class ExtraMarkersManager
@@ -54,30 +33,31 @@ namespace LMU
 		static ExtraMarkersManager* GetSingleton() { return singleton; }
 
 		void AddExtraMarkers(RE::LocalMapMenu& a_localMapMenu);
-
 		void PostCreateMarkers(RE::GFxValue& a_iconDisplay);
 
 		void ResetDisplayRadii()
 		{
-			const auto radius = settings::mapmenu::localMapShowActorsOnlyWithDetectSpell ? 0U : std::numeric_limits<std::uint32_t>::max();
-			aliveActorsDisplayRadius = undeadActorsDisplayRadius = deadActorsDisplayRadius = radius;
+			const float radius = settings::mapmenu::localMapShowActorsOnlyWithDetectSpell ?
+				0.0F : std::numeric_limits<float>::max();
+			aliveActorsDisplayRadius = radius;
+			undeadActorsDisplayRadius = radius;
+			deadActorsDisplayRadius = radius;
 		}
 
-		std::uint32_t GetAliveActorsDisplayRadius() const { return aliveActorsDisplayRadius / feetToUnits; }
-		std::uint32_t GetUndeadActorsDisplayRadius() const { return undeadActorsDisplayRadius / feetToUnits; }
-		std::uint32_t GetDeadActorsDisplayRadius() const { return deadActorsDisplayRadius / feetToUnits; }
-
-		void SetAliveActorsDisplayRadius(std::uint32_t a_radius) { aliveActorsDisplayRadius = a_radius * feetToUnits; }
-		void SetUndeadActorsDisplayRadius(std::uint32_t a_radius) { undeadActorsDisplayRadius = a_radius * feetToUnits; }
-		void SetDeadActorsDisplayRadius(std::uint32_t a_radius) { deadActorsDisplayRadius = a_radius * feetToUnits; }
-
 	private:
-		static void AddExtraMarker(RE::ActorHandle& a_actorHandle, RE::Actor* actor, RE::BSTArray<RE::MapMenuMarker>& a_mapMarkers);
+		static void AddExtraMarker(RE::ActorHandle& a_actorHandle, RE::Actor* a_actor,
+			RE::BSTArray<RE::MapMenuMarker>& a_mapMarkers);
+		void RefreshDisplayRadii(RE::PlayerCharacter* a_player);
+		static bool IsDetectDeadEffect(const RE::ActiveEffect* a_effect);
+		static bool IsAuraWhisperEffect(const RE::ActiveEffect* a_effect);
 
-		static inline ExtraMarkersManager* singleton;
+		static inline ExtraMarkersManager* singleton = nullptr;
 
-		std::uint32_t aliveActorsDisplayRadius = settings::mapmenu::localMapShowActorsOnlyWithDetectSpell ? 0 : std::numeric_limits<std::uint32_t>::max();
-		std::uint32_t undeadActorsDisplayRadius = settings::mapmenu::localMapShowActorsOnlyWithDetectSpell ? 0 : std::numeric_limits<std::uint32_t>::max();
-		std::uint32_t deadActorsDisplayRadius = settings::mapmenu::localMapShowActorsOnlyWithDetectSpell ? 0 : std::numeric_limits<std::uint32_t>::max();
+		float aliveActorsDisplayRadius = settings::mapmenu::localMapShowActorsOnlyWithDetectSpell ?
+			0.0F : std::numeric_limits<float>::max();
+		float undeadActorsDisplayRadius = settings::mapmenu::localMapShowActorsOnlyWithDetectSpell ?
+			0.0F : std::numeric_limits<float>::max();
+		float deadActorsDisplayRadius = settings::mapmenu::localMapShowActorsOnlyWithDetectSpell ?
+			0.0F : std::numeric_limits<float>::max();
 	};
 }

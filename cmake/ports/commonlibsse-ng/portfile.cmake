@@ -1,40 +1,62 @@
-# Get port from Github
-vcpkg_from_github(
+# Reproducible CommonLibSSE-NG source build for the Skyrim 1.7.104.0 update.
+vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO alandtse/CommonLibVR
-    REF e617713b2ae8a927bf925d1ad138cc48ab72e414 # 22/09/24
-    SHA512 997238522e1433dd81c73b4762ae8ec0e919ac65604570924ae5a76ba7d4428dfe8d961cf1fdc693744dba6be66bf45ba16d6a603ca9bb8234f08aedf2df146d
-    HEAD_REF ng
+    URL https://github.com/alandtse/CommonLibSSE-NG.git
+    REF 736dc64094e59232abfbcdf796cd0a063e136ec6
 )
 
-# Get submodule and copy to extern/ folder (done manually because Vcpkg does not support Git submodules)
-vcpkg_from_github(
+# CommonLibSSE-NG keeps OpenVR as a git submodule. vcpkg_from_git does not
+# initialize submodules, so materialize the exact submodule revision explicitly.
+vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH_OPENVR
-    REPO ValveSoftware/openvr
-    REF ebdea152f8aac77e9a6db29682b81d762159df7e # 01/09/17
-    SHA512 4fb668d933ac5b73eb4e97eb29816176e500a4eaebe2480cd0411c95edfb713d58312036f15db50884a2ef5f4ca44859e108dec2b982af9163cefcfc02531f63
-    HEAD_REF master
+    URL https://github.com/ValveSoftware/openvr.git
+    REF 60eb187801956ad277f1cae6680e3a410ee0873b
 )
- file(COPY "${SOURCE_PATH_OPENVR}/" DESTINATION "${SOURCE_PATH}/extern/openvr")
- file(REMOVE_RECURSE "${SOURCE_PATH_OPENVR}/")
+file(REMOVE_RECURSE "${SOURCE_PATH}/extern/openvr")
+file(COPY "${SOURCE_PATH_OPENVR}/" DESTINATION "${SOURCE_PATH}/extern/openvr")
 
- # Configure options to build
-vcpkg_configure_cmake(
-        SOURCE_PATH "${SOURCE_PATH}"
-        PREFER_NINJA
-        OPTIONS -DBUILD_TESTS=off -DSKSE_SUPPORT_XBYAK=on
+# CommonLibSSE-NG 9.0.1 exports Microsoft::DirectXTK from its public link
+# interface, but its installed Config.cmake only declares spdlog as a
+# dependency.  Consumers then fail during CMake generation with
+# "Microsoft::DirectXTK target was not found".  Fix the upstream package
+# template before configuring so the generated vcpkg package is self-contained.
+vcpkg_replace_string(
+    "${SOURCE_PATH}/cmake/config.cmake.in"
+    "find_dependency(spdlog CONFIG)"
+    "find_dependency(spdlog CONFIG)\nfind_dependency(directxtk CONFIG)"
 )
 
-vcpkg_install_cmake()
-vcpkg_cmake_config_fixup(PACKAGE_NAME CommonLibSSE CONFIG_PATH lib/cmake)
+vcpkg_cmake_configure(
+    SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS
+        -DBUILD_TESTS=OFF
+        -DENABLE_SKYRIM_SE=ON
+        -DENABLE_SKYRIM_AE=ON
+        -DENABLE_SKYRIM_VR=OFF
+        -DSKSE_SUPPORT_XBYAK=ON
+        -DSKSE_SUPPORT_PATCH_SAFETY=OFF
+        -DCOMMONLIB_ENABLE_IPO=ON
+)
+
+vcpkg_cmake_install()
+vcpkg_cmake_config_fixup(
+    PACKAGE_NAME CommonLibSSE
+    CONFIG_PATH lib/cmake/CommonLibSSE
+)
 vcpkg_copy_pdbs()
 
-file(INSTALL "${SOURCE_PATH}/extern/openvr/headers/openvr.h" DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(GLOB CMAKE_CONFIGS "${CURRENT_PACKAGES_DIR}/share/CommonLibSSE/CommonLibSSE/*.cmake")
-file(INSTALL ${CMAKE_CONFIGS} DESTINATION "${CURRENT_PACKAGES_DIR}/share/CommonLibSSE")
-file(INSTALL "${SOURCE_PATH}/cmake/CommonLibSSE.cmake" DESTINATION "${CURRENT_PACKAGES_DIR}/share/CommonLibSSE")
+# add_commonlibsse_plugin() is a consumer helper and is not part of the upstream
+# install rule, therefore install it alongside the generated package config.
+file(INSTALL "${SOURCE_PATH}/cmake/CommonLibSSE.cmake"
+     DESTINATION "${CURRENT_PACKAGES_DIR}/share/CommonLibSSE")
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
-file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/share/CommonLibSSE/CommonLibSSE")
-
-file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+# CommonLibSSE-NG 9.x stores the GPL text in COPYING.txt and its custom
+# Skyrim/SKSE linking exceptions in EXCEPTIONS.md.  vcpkg requires a
+# share/<port>/copyright file, so install COPYING.txt under that canonical name
+# and keep the exception terms alongside it.
+file(INSTALL "${SOURCE_PATH}/COPYING.txt"
+     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
+     RENAME copyright)
+file(INSTALL "${SOURCE_PATH}/EXCEPTIONS.md"
+     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")

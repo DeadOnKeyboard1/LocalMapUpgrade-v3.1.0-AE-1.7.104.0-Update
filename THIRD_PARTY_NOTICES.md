@@ -2,21 +2,18 @@
 
 ## CommonLibSSE-NG provenance
 
-The source tree's vcpkg overlay pins:
+This source tree builds against the pinned CommonLibSSE-NG 9.0.1 source used by
+the included vcpkg overlay:
 
-- Repository lineage: `alandtse/CommonLibVR` / CommonLibSSE-NG
-- Source commit: `e617713b2ae8a927bf925d1ad138cc48ab72e414`
-- Historical port license: MIT
-- OpenVR commit: `ebdea152f8aac77e9a6db29682b81d762159df7e`
+- Repository: `alandtse/CommonLibSSE-NG`
+- Source commit: `736dc64094e59232abfbcdf796cd0a063e136ec6`
+- Version: 9.0.1
+- License: GPL-3.0-or-later with the upstream Modding and Linking Exceptions
+- OpenVR source commit: `60eb187801956ad277f1cae6680e3a410ee0873b`
 
-The tested release DLL was built using an external vcpkg installation rather
-than that checked-in overlay. Its DLL and PDB identify a CommonLibSSE-NG build
-source directory beginning with `b2f24ebf25`; the remaining commit digits are
-not embedded in the available artifacts.
-
-Because that tested binary belongs to the newer CommonLibSSE-NG licensing
-generation, the release includes the CommonLibSSE-NG GPL-3.0-or-later text and
-its Modding and Linking Exceptions, plus the historical CommonLib MIT notice.
+The overlay also patches CommonLibSSE-NG's generated CMake package metadata so
+its public DirectXTK dependency is discovered by consumers. No gameplay code is
+changed by that packaging patch.
 
 ## Components
 
@@ -24,8 +21,7 @@ its Modding and Linking Exceptions, plus the historical CommonLib MIT notice.
 | --- | --- | --- |
 | Local Map Upgrade update | GPL-3.0-or-later | `LICENSE` |
 | Original Local Map Upgrade source | MIT | `licenses/LocalMapUpgrade-MIT.txt` |
-| CommonLibSSE-NG (tested binary) | GPL-3.0-or-later with exceptions | `licenses/CommonLibSSE-NG-GPL-3.0-or-later.txt`, `licenses/CommonLibSSE-NG-EXCEPTIONS.md` |
-| CommonLibSSE-NG (historical pinned source) | MIT | `licenses/CommonLibSSE-NG-MIT.txt` |
+| CommonLibSSE-NG 9.0.1 | GPL-3.0-or-later with exceptions | `licenses/CommonLibSSE-NG-GPL-3.0-or-later.txt`, `licenses/CommonLibSSE-NG-EXCEPTIONS.md` |
 | SimpleIni | MIT | `licenses/SimpleIni-MIT.txt` |
 | OpenVR | BSD-3-Clause | `licenses/OpenVR-BSD-3-Clause.txt` |
 | DirectXMath | MIT | `licenses/DirectXMath.txt` |

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Settings.h"
-
 #include "API.h"
 
 namespace LMU
@@ -13,8 +12,8 @@ namespace LMU
 		{
 			struct FogOfWarGroup
 			{
-				ID3D11PixelShader* fogOfWar = nullptr;
-				ID3D11PixelShader* noFogOfWar = nullptr;
+				REX::W32::ID3D11PixelShader* fogOfWar = nullptr;
+				REX::W32::ID3D11PixelShader* noFogOfWar = nullptr;
 			};
 
 			FogOfWarGroup blackNWhite;
@@ -29,6 +28,8 @@ namespace LMU
 
 		static ShaderManager* GetSingleton() { return singleton; }
 
+		~ShaderManager();
+
 		void ToggleFogOfWarLocalMapShader();
 		void ApplySettings();
 
@@ -38,20 +39,18 @@ namespace LMU
 	private:
 		ShaderManager();
 
-		ID3D11PixelShader* CompilePixelShader(const char* a_pixelShaderSrc,
-											  const std::vector<const char*>& a_defineNames = { });
+		REX::W32::ID3D11PixelShader* CompilePixelShader(const char* a_pixelShaderSrc,
+			const std::vector<const char*>& a_defineNames = {});
+		static void ReleaseShaderGroup(PixelShaderGroup& a_group);
 
 		static inline ShaderManager* singleton = nullptr;
-		
 		static inline PixelShaderGroup squaredShaders;
 		static inline PixelShaderGroup roundShaders;
-
 		static inline RE::BSGraphics::PixelShader* localMapPixelShader = nullptr;
 
-		static inline bool& isFogOfWarEnabled = *REL::Relocation<bool*>{ REL::VariantID{ 501260, 359696, 0x1E70DFC } }.get();
-
-		// members
+		bool isFogOfWarEnabled = settings::mapmenu::localMapFogOfWar;
 		PixelShaderProperty::Shape shape = PixelShaderProperty::Shape::kSquared;
-		PixelShaderProperty::Style style = settings::mapmenu::localMapColor ? PixelShaderProperty::Style::kColor : PixelShaderProperty::Style::kBlackNWhite;
+		PixelShaderProperty::Style style = settings::mapmenu::localMapColor ?
+			PixelShaderProperty::Style::kColor : PixelShaderProperty::Style::kBlackNWhite;
 	};
 }

@@ -45,8 +45,12 @@ make_includable(shaders/ISLocalMap.hlsl include/ISLocalMap.hlsl.h)
 ## Configure target DLL
 ########################################################################################################################
 
-find_package(CommonLibSSE CONFIG REQUIRED)
+# CommonLibSSE-NG 9.0.1 exposes Microsoft::DirectXTK in its public link
+# interface. Discover the dependency explicitly before importing CommonLibSSE
+# as a defensive fallback in addition to the overlay Config.cmake fix.
 find_package(spdlog REQUIRED CONFIG)
+find_package(directxtk CONFIG REQUIRED)
+find_package(CommonLibSSE CONFIG REQUIRED)
 
 add_commonlibsse_plugin(${PROJECT_NAME} SOURCES ${headers} ${sources})
 add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS "${PROJECT_NAME}")
@@ -74,23 +78,33 @@ target_compile_definitions(
 target_compile_options(
 	${PROJECT_NAME}
 	PRIVATE
-		/Zi
 		/UENABLE_SKYRIM_VR
 )
 
 if (MSVC)
+	# Keep local usernames and absolute source/build roots out of shipped binaries/PDBs.
+	target_compile_options(
+		${PROJECT_NAME}
+		PRIVATE
+			/experimental:deterministic
+			"/pathmap:${CMAKE_CURRENT_SOURCE_DIR}=."
+			"/pathmap:${CMAKE_CURRENT_BINARY_DIR}=./build"
+			"$<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:/Zi>"
+	)
 	target_link_options(
 		${PROJECT_NAME}
 		PRIVATE
+			/Brepro
+			"/PDBALTPATH:%_PDB%"
 			"$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF>"
-			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF>"
+			"$<$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF>"
 	)
 endif()
 
 target_precompile_headers(
 	${PROJECT_NAME}
 	PRIVATE
-		include/PCH.h
+		include/pch.h
 )
 
 target_sources(

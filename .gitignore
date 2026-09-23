@@ -1,23 +1,40 @@
+# IDE / editor
 .vs/
 .vscode/
+.idea/
+*.user
+
+# Local toolchains and generated build output
+_toolchain/
 build/
 build-*/
+build-logs/
 out/
+dist/
+package/
 __vcpkg_installed*/
 CMakeUserPresets.json
-include/ISLocalMap.hlsl.h
-/swf/Map
 
+# Generated source
+/include/ISLocalMap.hlsl.h
+
+# Local upload logs / temporary files
+github-upload-*.log
+*.tmp
+*.log
+*.pyc
+__pycache__/
+.codex.tmp/
+
+# Native build artifacts
 *.dll
 *.exp
 *.ilk
 *.lib
-*.log
 *.map
 *.pdb
-*.tmp
-*.user
+
+# Archives
 *.zip
-*.pyc
-__pycache__/
-.codex.tmp/
+*.rar
+*.7z

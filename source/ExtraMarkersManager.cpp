@@ -1,225 +1,276 @@
 #include "ExtraMarkersManager.h"
-#include "RuntimePlayerInfo.h"
-
 #include "Settings.h"
-
-#include "RE/L/LocalMapCamera.h"
 #include "RE/M/MapMenuMarker.h"
 
 namespace RE
 {
-	std::int32_t TESObjectREFR_GetInventoryCount(TESObjectREFR* a_object, bool a_useDataHandlerInventory = false, bool a_unk03 = false)
+	std::int32_t TESObjectREFR_GetInventoryCount(TESObjectREFR* a_object, bool a_useDataHandlerInventory = false,
+		bool a_unk03 = false)
 	{
+		if (!a_object) {
+			return 0;
+		}
 		using func_t = decltype(&TESObjectREFR_GetInventoryCount);
-		REL::Relocation<func_t> func{ REL::VariantID{ 19274, 19700, 0x29F980 } };
+		static REL::Relocation<func_t> func{ REL::VariantID{ 19274, 19700, 0x29F980 } };
 		return func(a_object, a_useDataHandlerInventory, a_unk03);
 	}
 
 	std::int32_t ExtraDataList_GetDroppedWeapon(ExtraDataList* a_extraList, TESObjectREFRPtr& a_weapon)
 	{
 		using func_t = decltype(&ExtraDataList_GetDroppedWeapon);
-		REL::Relocation<func_t> func{ REL::VariantID{ 11616, 11762, 0x1266A0 } };
-		return func(a_extraList, a_weapon);
+		static REL::Relocation<func_t> func{ REL::VariantID{ 11616, 11762, 0x1266A0 } };
+		return a_extraList ? func(a_extraList, a_weapon) : 0;
 	}
 
 	std::int32_t ExtraDataList_GetDroppedUtil(ExtraDataList* a_extraList, TESObjectREFRPtr& a_util)
 	{
 		using func_t = decltype(&ExtraDataList_GetDroppedUtil);
-		REL::Relocation<func_t> func{ REL::VariantID{ 11617, 11763, 0x126870 } };
-		return func(a_extraList, a_util);
+		static REL::Relocation<func_t> func{ REL::VariantID{ 11617, 11763, 0x126870 } };
+		return a_extraList ? func(a_extraList, a_util) : 0;
 	}
 
 	bool TESObjectREFR_HasAnyDroppedItem(TESObjectREFR* a_ref)
 	{
-		if (std::int32_t inventoryCount = RE::TESObjectREFR_GetInventoryCount(a_ref))
-		{
-			return true;
-		}
-		else
-		{
-			if (a_ref->formType == RE::FormType::ActorCharacter)
-			{
-				RE::TESObjectREFRPtr carriedDroppedWeapon;
-				RE::ExtraDataList_GetDroppedWeapon(&a_ref->extraList, carriedDroppedWeapon);
-				if (carriedDroppedWeapon)
-				{
-					return true;
-				}
-
-				RE::TESObjectREFRPtr carriedDroppedUtil;
-				RE::ExtraDataList_GetDroppedUtil(&a_ref->extraList, carriedDroppedUtil);
-				if (carriedDroppedUtil)
-				{
-					return true;
-				}
-			}
-
+		if (!a_ref) {
 			return false;
 		}
-	}
+		if (TESObjectREFR_GetInventoryCount(a_ref) > 0) {
+			return true;
+		}
+		if (a_ref->formType != FormType::ActorCharacter) {
+			return false;
+		}
 
-	// Added here because the virtual function seems broken in CommonLibVR
-	bool Actor__IsDead(Actor* a_actor, bool a_notEssential = true)
-	{
-		ACTOR_LIFE_STATE lifeState = a_actor->AsActorState()->actorState1.lifeState;
-
-		if (lifeState == ACTOR_LIFE_STATE::kDying ||
-			lifeState == ACTOR_LIFE_STATE::kDead ||
-			lifeState == ACTOR_LIFE_STATE::kRecycle)
-		{
+		TESObjectREFRPtr droppedWeapon;
+		ExtraDataList_GetDroppedWeapon(&a_ref->extraList, droppedWeapon);
+		if (droppedWeapon) {
 			return true;
 		}
 
-		if (!a_notEssential)
-		{
-			return lifeState == ACTOR_LIFE_STATE::kEssentialDown;
-		}
+		TESObjectREFRPtr droppedUtil;
+		ExtraDataList_GetDroppedUtil(&a_ref->extraList, droppedUtil);
+		return static_cast<bool>(droppedUtil);
+	}
 
-		return false;
+	bool Actor__IsDead(Actor* a_actor, bool a_notEssential = true)
+	{
+		if (!a_actor) {
+			return false;
+		}
+		auto* state = a_actor->AsActorState();
+		if (!state) {
+			return false;
+		}
+		const ACTOR_LIFE_STATE lifeState = state->actorState1.lifeState;
+		if (lifeState == ACTOR_LIFE_STATE::kDying ||
+			lifeState == ACTOR_LIFE_STATE::kDead ||
+			lifeState == ACTOR_LIFE_STATE::kRecycle) {
+			return true;
+		}
+		return !a_notEssential && lifeState == ACTOR_LIFE_STATE::kEssentialDown;
 	}
 
 	bool Actor__IsUndead(Actor* a_actor)
 	{
-		auto race = a_actor ? a_actor->GetRace() : nullptr;
-		if (!race) return false;
-		for (const auto& kw : { "ActorTypeDaedra", "ActorTypeDwarven", "NoDetectLife", "ActorTypeUndead" })
-		{
-			if (race->HasKeywordString(kw)) return true;
+		auto* race = a_actor ? a_actor->GetRace() : nullptr;
+		if (!race) {
+			return false;
 		}
-		return false;
+
+		static std::unordered_map<FormID, bool> raceUndeadCache;
+		const FormID raceID = race->GetFormID();
+		if (const auto it = raceUndeadCache.find(raceID); it != raceUndeadCache.end()) {
+			return it->second;
+		}
+
+		bool undead = false;
+		static constexpr std::array<std::string_view, 4> keywords{
+			"ActorTypeDaedra", "ActorTypeDwarven", "NoDetectLife", "ActorTypeUndead"
+		};
+		for (const auto keyword : keywords) {
+			if (race->HasKeywordString(keyword)) {
+				undead = true;
+				break;
+			}
+		}
+		raceUndeadCache.emplace(raceID, undead);
+		return undead;
 	}
 }
 
 namespace LMU
 {
-	void ExtraMarkersManager::AddExtraMarker(RE::ActorHandle& a_actorHandle, RE::Actor* a_actor,
-											 RE::BSTArray<RE::MapMenuMarker>& a_mapMarkers)
+	bool ExtraMarkersManager::IsDetectDeadEffect(const RE::ActiveEffect* a_effect)
 	{
-		RE::MapMenuMarker mapMarker
-		{
-			.data = nullptr,
-			.ref = a_actorHandle.native_handle(),
-			.description = a_actor->GetDisplayFullName(),
-			.type = RE::MapMenuMarker::Type::kLocation, // Playing mind tricks with the game
-			.door = 0,
-			.index = -1,
-			.quest = nullptr,
-			.unk30 = 1
-		};
+		if (!a_effect || !a_effect->effect || !a_effect->effect->baseEffect) {
+			return false;
+		}
 
+		auto* condition = a_effect->effect->baseEffect->conditions.head;
+		while (condition) {
+			if (condition->data.functionData.function == RE::FUNCTION_DATA::FunctionID::kGetDead) {
+				return true;
+			}
+			condition = condition->next;
+		}
+		return false;
+	}
+
+	bool ExtraMarkersManager::IsAuraWhisperEffect(const RE::ActiveEffect* a_effect)
+	{
+		if (!a_effect || !a_effect->spell) {
+			return false;
+		}
+		static constexpr std::array<RE::FormID, 3> auraWhisperIDs{ 0x8AFCC, 0x8AFCD, 0x8AFCE };
+		const RE::FormID id = a_effect->spell->GetFormID();
+		return std::ranges::find(auraWhisperIDs, id) != auraWhisperIDs.end();
+	}
+
+	void ExtraMarkersManager::RefreshDisplayRadii(RE::PlayerCharacter* a_player)
+	{
+		if (!settings::mapmenu::localMapShowActorsOnlyWithDetectSpell) {
+			aliveActorsDisplayRadius = undeadActorsDisplayRadius = deadActorsDisplayRadius =
+				std::numeric_limits<float>::max();
+			return;
+		}
+
+		aliveActorsDisplayRadius = undeadActorsDisplayRadius = deadActorsDisplayRadius = 0.0F;
+		if (!a_player) {
+			return;
+		}
+
+		auto* effects = a_player->GetActiveEffectList();
+		if (!effects) {
+			return;
+		}
+
+		for (auto* activeEffect : *effects) {
+			if (!activeEffect || !activeEffect->effect || !activeEffect->effect->baseEffect ||
+				activeEffect->flags.any(RE::ActiveEffect::Flag::kInactive) ||
+				activeEffect->flags.any(RE::ActiveEffect::Flag::kDispelled)) {
+				continue;
+			}
+
+			const float radius = static_cast<float>(activeEffect->effect->GetArea()) * feetToUnits;
+			if (radius <= 0.0F) {
+				continue;
+			}
+
+			if (skyrim_cast<RE::DetectLifeEffect*>(activeEffect)) {
+				if (IsDetectDeadEffect(activeEffect)) {
+					undeadActorsDisplayRadius = std::max(undeadActorsDisplayRadius, radius);
+					deadActorsDisplayRadius = std::max(deadActorsDisplayRadius, radius);
+				} else {
+					aliveActorsDisplayRadius = std::max(aliveActorsDisplayRadius, radius);
+				}
+			} else if (skyrim_cast<RE::ScriptEffect*>(activeEffect) && IsAuraWhisperEffect(activeEffect)) {
+				aliveActorsDisplayRadius = std::max(aliveActorsDisplayRadius, radius);
+				undeadActorsDisplayRadius = std::max(undeadActorsDisplayRadius, radius);
+			}
+		}
+	}
+
+	void ExtraMarkersManager::AddExtraMarker(RE::ActorHandle& a_actorHandle, RE::Actor* a_actor,
+		RE::BSTArray<RE::MapMenuMarker>& a_mapMarkers)
+	{
+		if (!a_actor || !a_actorHandle) {
+			return;
+		}
+
+		RE::MapMenuMarker mapMarker{};
+		mapMarker.fullName = nullptr;
+		mapMarker.ref = a_actorHandle.native_handle();
+		mapMarker.customMarker = a_actor->GetDisplayFullName();
+		mapMarker.type = 0;  // kLocation in the engine's local-map marker table
+		mapMarker.door = 0;
+		mapMarker.index = -1;
+		mapMarker.form = nullptr;
+		mapMarker.unk30 = 1;
 		a_mapMarkers.push_back(mapMarker);
 	}
 
 	void ExtraMarkersManager::AddExtraMarkers(RE::LocalMapMenu& a_localMapMenu)
 	{
-		RE::GFxValue extraMarkersData;
-		a_localMapMenu.GetRuntimeData().iconDisplay.GetMember("ExtraMarkerData", &extraMarkersData);
-
-		if (!extraMarkersData.IsArray())
-		{
+		auto* player = RE::PlayerCharacter::GetSingleton();
+		auto* processLists = RE::ProcessLists::GetSingleton();
+		if (!player || !processLists) {
 			return;
 		}
 
+		RefreshDisplayRadii(player);
+
+		RE::GFxValue extraMarkersData;
+		auto& runtimeData = a_localMapMenu.GetRuntimeData();
+		if (!runtimeData.mapMovie.GetMember("ExtraMarkerData", &extraMarkersData) || !extraMarkersData.IsArray()) {
+			return;
+		}
 		extraMarkersData.ClearElements();
 
-		RE::BSTArray<RE::MapMenuMarker>& mapMarkers = a_localMapMenu.mapMarkers;
+		auto& mapMarkers = a_localMapMenu.mapMarkers;
+		auto& actorHandles = processLists->highActorHandles;
+		auto& enemyHandles = player->GetInfoRuntimeData().actorsToDisplayOnTheHUDArray;
 
-		RE::PlayerCharacter* player = RE::PlayerCharacter::GetSingleton();
-		RE::BSTArray<RE::ActorHandle>& actorHandles = RE::ProcessLists::GetSingleton()->highActorHandles;
-		RE::BSTArray<RE::ActorHandle>& enemyHandles = GetPlayerInfo(player).actorsToDisplayOnTheHUDArray;
+		std::unordered_set<std::uint32_t> enemies;
+		enemies.reserve(enemyHandles.size());
+		for (const auto& enemyHandle : enemyHandles) {
+			if (enemyHandle) {
+				enemies.insert(enemyHandle.native_handle());
+			}
+		}
 
-		for (RE::ActorHandle& actorHandle : actorHandles)
-		{
-			if (RE::Actor* actor = actorHandle.get().get())
-			{
-				float distance = actor->GetPosition().GetDistance(player->GetPosition());
+		const RE::NiPoint3 playerPosition = player->GetPosition();
+		for (auto& actorHandle : actorHandles) {
+			auto actorPtr = actorHandle.get();
+			auto* actor = actorPtr.get();
+			if (!actor || actor == player) {
+				continue;
+			}
 
-				bool isDead = Actor__IsDead(actor);
-
-				if (isDead)
-				{
-					if (distance <= deadActorsDisplayRadius)
-					{
-						if (RE::TESObjectREFR_HasAnyDroppedItem(actor))
-						{
-							if (settings::mapmenu::localMapShowDeadActors)
-							{
-								AddExtraMarker(actorHandle, actor, mapMarkers);
-								extraMarkersData.PushBack(ExtraMarker::Type::kDead);
-							}
-						}
-					}
+			const float distance = actor->GetPosition().GetDistance(playerPosition);
+			if (RE::Actor__IsDead(actor)) {
+				if (distance <= deadActorsDisplayRadius && settings::mapmenu::localMapShowDeadActors &&
+					RE::TESObjectREFR_HasAnyDroppedItem(actor)) {
+					AddExtraMarker(actorHandle, actor, mapMarkers);
+					extraMarkersData.PushBack(ExtraMarker::Type::kDead);
 				}
-				else
-				{
-					bool isUndead = Actor__IsUndead(actor);
-					bool isAlive = !isUndead;
+				continue;
+			}
 
-					if ((isAlive && distance <= aliveActorsDisplayRadius) ||
-						(isUndead && distance <= undeadActorsDisplayRadius))
-					{
-						bool isEnemy = false;
+			const bool isUndead = RE::Actor__IsUndead(actor);
+			if ((!isUndead && distance > aliveActorsDisplayRadius) ||
+				(isUndead && distance > undeadActorsDisplayRadius)) {
+				continue;
+			}
 
-						for (RE::ActorHandle& enemyActorHandle : enemyHandles)
-						{
-							if (actorHandle == enemyActorHandle)
-							{
-								isEnemy = true;
-								break;
-							}
-						}
-
-						if (isEnemy)
-						{
-							if (settings::mapmenu::localMapShowEnemyActors)
-							{
-								AddExtraMarker(actorHandle, actor, mapMarkers);
-								extraMarkersData.PushBack(ExtraMarker::Type::kEnemy);
-							}
-						}
-						else
-						{
-							if (actor->IsPlayerTeammate())
-							{
-								if (settings::mapmenu::localMapShowTeammateActors)
-								{
-									AddExtraMarker(actorHandle, actor, mapMarkers);
-									extraMarkersData.PushBack(ExtraMarker::Type::kTeammate);
-								}
-							}
-							else if (actor->IsHostileToActor(player))
-							{
-								if (settings::mapmenu::localMapShowHostileActors)
-								{
-									AddExtraMarker(actorHandle, actor, mapMarkers);
-									extraMarkersData.PushBack(ExtraMarker::Type::kHostile);
-								}
-							}
-							else if (actor->IsGuard())
-							{
-								if (settings::mapmenu::localMapShowGuardActors)
-								{
-									AddExtraMarker(actorHandle, actor, mapMarkers);
-									extraMarkersData.PushBack(ExtraMarker::Type::kGuard);
-								}
-							}
-							else
-							{
-								if (settings::mapmenu::localMapShowNeutralActors)
-								{
-									AddExtraMarker(actorHandle, actor, mapMarkers);
-									extraMarkersData.PushBack(ExtraMarker::Type::kNeutral);
-								}
-							}
-						}
-					}
+			if (enemies.contains(actorHandle.native_handle())) {
+				if (settings::mapmenu::localMapShowEnemyActors) {
+					AddExtraMarker(actorHandle, actor, mapMarkers);
+					extraMarkersData.PushBack(ExtraMarker::Type::kEnemy);
 				}
+			} else if (actor->IsPlayerTeammate()) {
+				if (settings::mapmenu::localMapShowTeammateActors) {
+					AddExtraMarker(actorHandle, actor, mapMarkers);
+					extraMarkersData.PushBack(ExtraMarker::Type::kTeammate);
+				}
+			} else if (actor->IsHostileToActor(player)) {
+				if (settings::mapmenu::localMapShowHostileActors) {
+					AddExtraMarker(actorHandle, actor, mapMarkers);
+					extraMarkersData.PushBack(ExtraMarker::Type::kHostile);
+				}
+			} else if (actor->IsGuard()) {
+				if (settings::mapmenu::localMapShowGuardActors) {
+					AddExtraMarker(actorHandle, actor, mapMarkers);
+					extraMarkersData.PushBack(ExtraMarker::Type::kGuard);
+				}
+			} else if (settings::mapmenu::localMapShowNeutralActors) {
+				AddExtraMarker(actorHandle, actor, mapMarkers);
+				extraMarkersData.PushBack(ExtraMarker::Type::kNeutral);
 			}
 		}
 	}
-
 	void ExtraMarkersManager::PostCreateMarkers(RE::GFxValue& a_iconDisplay)
 	{
 		a_iconDisplay.Invoke("PostCreateMarkers");
 	}
+
 }

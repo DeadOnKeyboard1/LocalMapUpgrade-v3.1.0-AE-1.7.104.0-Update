@@ -29,9 +29,14 @@ namespace settings
 			data / "SKSE/Plugins" / iniFileName,
 			data / "MCM/Settings/LocalMapUpgrade.ini"
 		};
-		// Read partial MCM overrides without relying on Skyrim's INI vtables.
+		// Parse each INI only once per reload. Later files override earlier files.
+		const IniFile defaultsIni(paths[0]);
+		const IniFile pluginIni(paths[1]);
+		const IniFile userIni(paths[2]);
 		const auto read = [&](const wchar_t* section, const wchar_t* key, double fallback) {
-			for (const auto& path : paths) fallback = ReadIniNumber(path, section, key, fallback);
+			fallback = defaultsIni.ReadNumber(section, key, fallback);
+			fallback = pluginIni.ReadNumber(section, key, fallback);
+			fallback = userIni.ReadNumber(section, key, fallback);
 			return fallback;
 		};
 		const auto boolean = [&](const wchar_t* key, bool fallback) {

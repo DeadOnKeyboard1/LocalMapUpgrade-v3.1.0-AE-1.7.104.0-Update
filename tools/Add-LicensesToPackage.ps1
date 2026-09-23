@@ -1,14 +1,14 @@
 param(
     [Parameter(Mandatory = $false)]
-    [string]$PackagePath = (Join-Path $PSScriptRoot "..\..\..\LocalMapUpgrade-v3.1.0-MCM-AE-1.7.104.0.zip")
+    [string]$PackagePath = (Join-Path $PSScriptRoot "..\dist\LocalMapUpgrade-3.1.0-AE-1.7.104.0.zip")
 )
 
 $ErrorActionPreference = "Stop"
 $sourceRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $package = (Resolve-Path $PackagePath).Path
-$tempRoot = Join-Path $sourceRoot ".codex.tmp"
+$tempRoot = Join-Path $sourceRoot ".lmu-license-tmp"
 $tempPackage = Join-Path $tempRoot ([IO.Path]::GetFileName($package))
-$docsRoot = Join-Path $tempRoot "Docs\Local Map Upgrade"
+$docsRoot = Join-Path $tempRoot "Docs"
 
 if (Test-Path -LiteralPath $tempRoot) {
     Remove-Item -LiteralPath $tempRoot -Recurse -Force
@@ -24,14 +24,15 @@ Copy-Item -LiteralPath (Join-Path $sourceRoot "licenses") -Destination $docsRoot
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [IO.Compression.ZipFile]::Open($tempPackage, [IO.Compression.ZipArchiveMode]::Update)
 try {
-    $prefix = "Docs/Local Map Upgrade/"
+    $prefix = "Docs/"
     foreach ($entry in @($archive.Entries)) {
-        if ($entry.FullName.Replace('\', '/').StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
+        $name = $entry.FullName.Replace('\\', '/')
+        if ($name.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
             $entry.Delete()
         }
     }
     Get-ChildItem -LiteralPath $docsRoot -File -Recurse | ForEach-Object {
-        $relative = $_.FullName.Substring($docsRoot.Length).TrimStart('\').Replace('\', '/')
+        $relative = $_.FullName.Substring($docsRoot.Length).TrimStart('\\').Replace('\\', '/')
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
             $archive, $_.FullName, "$prefix$relative",
             [IO.Compression.CompressionLevel]::Optimal) | Out-Null
@@ -43,17 +44,17 @@ finally {
 
 $required = @(
     "SKSE/Plugins/LocalMapUpgrade.dll",
-    "Docs/Local Map Upgrade/LICENSE",
-    "Docs/Local Map Upgrade/NOTICE.md",
-    "Docs/Local Map Upgrade/THIRD_PARTY_NOTICES.md",
-    "Docs/Local Map Upgrade/licenses/LocalMapUpgrade-MIT.txt",
-    "Docs/Local Map Upgrade/licenses/CommonLibSSE-NG-GPL-3.0-or-later.txt",
-    "Docs/Local Map Upgrade/licenses/CommonLibSSE-NG-EXCEPTIONS.md",
-    "Docs/Local Map Upgrade/licenses/SimpleIni-MIT.txt"
+    "Docs/LICENSE",
+    "Docs/NOTICE.md",
+    "Docs/THIRD_PARTY_NOTICES.md",
+    "Docs/licenses/LocalMapUpgrade-MIT.txt",
+    "Docs/licenses/CommonLibSSE-NG-GPL-3.0-or-later.txt",
+    "Docs/licenses/CommonLibSSE-NG-EXCEPTIONS.md",
+    "Docs/licenses/SimpleIni-MIT.txt"
 )
 $check = [IO.Compression.ZipFile]::OpenRead($tempPackage)
 try {
-    $names = @($check.Entries | ForEach-Object { $_.FullName.Replace('\', '/') })
+    $names = @($check.Entries | ForEach-Object { $_.FullName.Replace('\\', '/') })
     foreach ($name in $required) {
         if ($names -notcontains $name) {
             throw "Package validation failed: missing $name"

@@ -13,28 +13,27 @@ namespace LMU
 		{
 			struct Callback : RE::IMessageBoxCallback
 			{
-				void Run(Message a_optionIndex) final;
+				void Run(std::uint8_t a_optionIndex) final;
 
-				void SetData(RE::LocalMapMenu* a_localMapMenu, float a_wndPointX, float a_wndPointY)
+				void SetData(float a_wndPointX, float a_wndPointY)
 				{
-					localMapMenu = a_localMapMenu;
 					wndPointX = a_wndPointX;
 					wndPointY = a_wndPointY;
 				}
 
-				RE::LocalMapMenu* localMapMenu = nullptr;
+				void ClearData()
+				{
+					wndPointX = 0.0F;
+					wndPointY = 0.0F;
+				}
+
 				float wndPointX = 0.0F;
 				float wndPointY = 0.0F;
 			};
 
-			MessageBox()
-			{
-				options.push_back(RE::GameSettingCollection::GetSingleton()->GetSetting("sMoveMarker")->data.s);
-				options.push_back(RE::GameSettingCollection::GetSingleton()->GetSetting("sLeaveMarker")->data.s);
-				options.push_back(RE::GameSettingCollection::GetSingleton()->GetSetting("sRemoveMarker")->data.s);
-			}
+			MessageBox();
 
-			RE::BSString title = RE::GameSettingCollection::GetSingleton()->GetSetting("sMoveMarkerQuestion")->data.s;
+			RE::BSString title;
 			RE::BSTArray<RE::BSString> options;
 			RE::BSTSmartPointer<Callback> callback = RE::make_smart<Callback>();
 		};
@@ -46,9 +45,8 @@ namespace LMU
 			return &singleton;
 		}
 
-		bool CanPlaceMarker() const { return allowPlaceMarker; }
+		[[nodiscard]] bool CanPlaceMarker() const { return allowPlaceMarker; }
 		void AllowPlaceMarker() { allowPlaceMarker = true; }
-
 		void PlaceMarker(RE::LocalMapMenu* a_localMapMenu, float a_wndPointX, float a_wndPointY);
 
 	private:

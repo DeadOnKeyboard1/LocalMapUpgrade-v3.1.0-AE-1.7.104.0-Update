@@ -3,7 +3,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '..');
 const strings = JSON.parse(fs.readFileSync(path.join(root, 'localization/strings.json'), 'utf8'));
-const config = JSON.parse(fs.readFileSync(path.join(root, 'package/MCM/Config/LocalMapUpgrade/config.json'), 'utf8'));
+const config = JSON.parse(fs.readFileSync(path.join(root, 'assets/MCM/Config/LocalMapUpgrade/config.json'), 'utf8'));
 // SKSE loads only the current language; explicitly provide English for non-German locales.
 const languages = ['ENGLISH', 'GERMAN', 'FRENCH', 'ITALIAN', 'SPANISH', 'POLISH', 'CZECH', 'RUSSIAN', 'JAPANESE', 'CHINESE'];
 const used = new Set();
